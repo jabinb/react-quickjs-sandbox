@@ -1,0 +1,87 @@
+{
+  "name": "react-quickjs-sandbox",
+  "version": "0.0.1",
+  "description": "Sandbox using quickjs-emscripten with support for untrusted React UI javascript",
+  "author": "jabinb",
+  "license": "MIT",
+  "source": "./src/index.ts",
+  "main": "./dist/esm/index.js",
+  "module": "./dist/cjs/index.js",
+  "types": "./dist/esm/index.d.ts",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "import": "./dist/esm/index.js",
+      "require": "./dist/cjs/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jabinb/react-quickjs-sandbox.git"
+  },
+  "scripts": {
+    "start:example": "parcel serve --no-hmr --dist-dir build src/example/index.html",
+    "build": "rm -rf dist && prettier --write src && yarn build:esm && yarn build:cjs",
+    "build:esm": "tsc --outDir dist/esm",
+    "build:cjs": "tsc --outDir dist/cjs",
+    "test": "test"
+  },
+  "resolutions": {
+    "styled-components": "^5"
+  },
+  "peerDependencies": {
+    "quickjs-emscripten": "*",
+    "react": "*",
+    "react-dom": "*",
+    "react-reconciler": "*"
+  },
+  "devDependencies": {
+    "@types/jest": "^28.1.6",
+    "@types/postcss-url": "^10.0.0",
+    "@types/react": "^18.0.15",
+    "@types/react-dom": "^18.0.6",
+    "@types/styled-components": "^5.1.25",
+    "@typescript-eslint/eslint-plugin": "^5.2.0",
+    "@typescript-eslint/parser": "^5.2.0",
+    "buffer": "^6.0.3",
+    "crypto-browserify": "^3.12.0",
+    "debug": "^4.3.4",
+    "eslint": "^8.19.0",
+    "eslint-config-semistandard": "^16.0.0",
+    "eslint-config-standard": "^16.0.3",
+    "eslint-config-standard-jsx": "^10.0.0",
+    "eslint-config-standard-react": "^11.0.1",
+    "eslint-plugin-import": "^2.25.2",
+    "eslint-plugin-node": "^11.1.0",
+    "eslint-plugin-prettier": "^4.2.1",
+    "eslint-plugin-promise": "^5.1.1",
+    "eslint-plugin-react": "^7.26.1",
+    "events": "^3.3.0",
+    "jest": "^28.1.3",
+    "parcel": "^2.5.0",
+    "path-browserify": "^1.0.1",
+    "prettier": "^2.7.1",
+    "process": "^0.11.10",
+    "querystring-es3": "^0.2.1",
+    "quickjs-emscripten": "^0.21.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-reconciler": "^0.25.1",
+    "servor": "^4.0.2",
+    "stream-browserify": "^3.0.0",
+    "styled-components": "^5.3.5",
+    "styled-icons": "^10.45.0",
+    "ts-jest": "^28.0.7",
+    "typescript": "^4.7.4",
+    "url": "^0.11.0"
+  },
+  "dependencies": {
+    "postcss": "^8.4.14",
+    "postcss-sanitize": "^0.0.9",
+    "postcss-url": "^10.1.3",
+    "urlpattern-polyfill": "^5.0.5"
+  }
+}
