@@ -18,6 +18,7 @@
     "declaration": true
   },
   "include": [
-    "src"
+    "src",
+    "example"
   ]
 }

@@ -23,7 +23,8 @@
     "url": "https://github.com/jabinb/react-quickjs-sandbox.git"
   },
   "scripts": {
-    "start:example": "parcel serve --no-hmr --dist-dir build src/example/index.html",
+    "start:example": "parcel serve --no-hmr --dist-dir build example/index.html",
+    "build:example": "NODE_ENV=production node parcel.mjs",
     "build": "rm -rf dist && prettier --write src && yarn build:esm && yarn build:cjs",
     "build:esm": "tsc --outDir dist/esm",
     "build:cjs": "tsc --outDir dist/cjs",
@@ -39,6 +40,9 @@
     "react-reconciler": "*"
   },
   "devDependencies": {
+    "@parcel/config-default": "^2.6.2",
+    "@parcel/core": "^2.6.2",
+    "@parcel/transformer-inline-string": "^2.6.2",
     "@types/jest": "^28.1.6",
     "@types/postcss-url": "^10.0.0",
     "@types/react": "^18.0.15",
@@ -61,7 +65,7 @@
     "eslint-plugin-react": "^7.26.1",
     "events": "^3.3.0",
     "jest": "^28.1.3",
-    "parcel": "^2.5.0",
+    "parcel": "^2.6.2",
     "path-browserify": "^1.0.1",
     "prettier": "^2.7.1",
     "process": "^0.11.10",
@@ -74,6 +78,7 @@
     "stream-browserify": "^3.0.0",
     "styled-components": "^5.3.5",
     "styled-icons": "^10.45.0",
+    "ts-debounce": "^4.0.0",
     "ts-jest": "^28.0.7",
     "typescript": "^4.7.4",
     "url": "^0.11.0"

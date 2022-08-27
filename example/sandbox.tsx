@@ -29,5 +29,3 @@ const App = (
 );
 
 root.render(App);
-
-// console.log(eval("import('react')"));

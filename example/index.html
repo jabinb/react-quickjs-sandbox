@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>QuickJS React</title>
+  </head>
+  <style>
+    h1 {
+      color: brown;
+    }
+  </style>
+  <style type="text/css" media="screen">
+    #root {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 50%;
+      height: 100%;
+    }
+    #editor {
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 50%;
+      height: 100%;
+    }
+  </style>
+  <body>
+    <h1>QuickJS React</h1>
+    <script type="module" src="./index.ts"></script>
+    <div id="root"></div>
+    <div id="editor"></div>
+
+    <script src="https://unpkg.com/typescript@latest/lib/typescriptServices.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.9.5/ace.js" type="text/javascript" charset="utf-8"></script>
+    <script>
+      var editor = ace.edit("editor");
+      editor.setTheme("ace/theme/monokai");
+      editor.session.setMode("ace/mode/typescript");
+    </script>
+  </body>
+</html>
