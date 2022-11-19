@@ -1,5 +1,5 @@
 import { newQuickJSAsyncWASMModule, QuickJSAsyncContext, QuickJSAsyncWASMModule } from 'quickjs-emscripten';
-import { createDomRootApi, createFakeWindow } from './dom/document';
+import { createDomRootApi } from './dom/document';
 import { createTimers } from './dom/timers';
 import { FilterFunctions, isAllowedUrl, isAttributeAllowed, isInputTypeAllowed, isTagAllowed } from './dom/filters';
 import { createObjectFromDefinition, ObjectDefinition } from './proxy';
@@ -14,11 +14,12 @@ export interface Options {
   source: string;
   filters?: FilterOptions;
   moduleLoader?: (moduleName: string) => Promise<string>;
-  extraGlobalsDefinition?: ObjectDefinition;
+  extraGlobalsDefinition?: (context: QuickJSAsyncContext) => ObjectDefinition;
 }
 
 export interface QjsReactSandbox {
   context: QuickJSAsyncContext;
+  getShadowRoot: () => ShadowRoot | undefined;
   disposeContext: VoidFunction;
 }
 
@@ -29,11 +30,12 @@ export const createQjsReactSandbox = async ({
   moduleLoader,
   extraGlobalsDefinition
 }: Options): Promise<QjsReactSandbox> => {
-  const runtime: QuickJSAsyncWASMModule = await newQuickJSAsyncWASMModule();
+  const module: QuickJSAsyncWASMModule = await newQuickJSAsyncWASMModule();
+  const runtime = module.newRuntime({ memoryLimitBytes: -1 });
+
   const context: QuickJSAsyncContext = runtime.newContext();
 
-  createFakeWindow(context);
-  const disposeRootApi = createDomRootApi(context, container, {
+  const { getShadowRoot, dispose: disposeRootApi } = createDomRootApi(context, container, {
     isInputTypeAllowed: filters?.isInputTypeAllowed ?? isInputTypeAllowed,
     isTagAllowed: filters?.isTagAllowed ?? isTagAllowed,
     isAttributeAllowed: filters?.isAttributeAllowed ?? isAttributeAllowed,
@@ -45,7 +47,7 @@ export const createQjsReactSandbox = async ({
     createObjectFromDefinition({
       context,
       warnOnDispose: false,
-      definition: extraGlobalsDefinition,
+      definition: extraGlobalsDefinition?.(context),
       hObject: context.global
     });
   }
@@ -55,6 +57,7 @@ export const createQjsReactSandbox = async ({
 
   return {
     context,
+    getShadowRoot,
     disposeContext: () => {
       disposeRootApi();
       disposeTimers();

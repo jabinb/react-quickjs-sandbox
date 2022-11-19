@@ -1,5 +1,5 @@
-export { createQjsReactSandbox, FilterOptions, Options, defaultModuleLoader } from './quickjs';
-export { cloneAsHandle } from './quickjs/clone';
+export { createQjsReactSandbox, FilterOptions, Options, defaultModuleLoader, QjsReactSandbox } from './quickjs';
+export { cloneAsHandle, cloneAsHandleF } from './quickjs/clone';
 export {
   createObjectProxy,
   createObjectFromDefinition,

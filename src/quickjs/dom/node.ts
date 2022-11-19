@@ -1,10 +1,10 @@
-import { QuickJSAsyncContext, Scope } from 'quickjs-emscripten';
+import { QuickJSAsyncContext, QuickJSDeferredPromise, Scope, StaticLifetime } from 'quickjs-emscripten';
 import { createObjectFromDefinition, ObjectDefinition } from '../proxy';
 import { JSValueConstPointer, JSValuePointer } from 'quickjs-emscripten/dist/types-ffi';
 import { domEventToQjsEvent } from './events';
 import { FilterFunctions, getAttributePropertyEquivalent } from './filters';
 import { violation } from '../log';
-import { NodeManager } from './queries';
+import { NodeManager } from './nodeManager';
 import { createStyleDeclarationProxy } from './styles';
 
 type ConstructorType<T = any> = { prototype: T; new (): T };
@@ -17,18 +17,18 @@ const instanceOfAny =
 
 export const getDomNodeProxyDefinition = ({
   context,
-  queries,
+  nodeManager,
   filters,
   node,
-  id = queries.nextId(),
-  eventListeners = new Map<JSValueConstPointer | JSValuePointer, VoidFunction>()
+  id = nodeManager.nextId(),
+  eventListeners = new Map<number, VoidFunction>()
 }: {
   context: QuickJSAsyncContext;
-  queries: NodeManager;
+  nodeManager: NodeManager;
   filters: FilterFunctions;
   node: HTMLElement | Text;
   id?: number;
-  eventListeners?: Map<JSValueConstPointer | JSValuePointer, VoidFunction>;
+  eventListeners?: Map<number, VoidFunction>;
 }): ObjectDefinition => ({
   // common definitions for text nodes and dom nodes
   _id: {
@@ -49,6 +49,17 @@ export const getDomNodeProxyDefinition = ({
       node.nodeValue = context.dump(value);
     }
   },
+  ownerDocument: {
+    get: () => nodeManager.fakeDocument?.handle.dup() || context.null
+  },
+  parentNode: {
+    get: () => nodeManager.findByNode(node.parentNode as HTMLElement)?.handle.dup() || context.null
+  },
+  parentElement: {
+    get: () => {
+      return nodeManager.findByNode(node.parentElement as HTMLElement)?.handle.dup() || context.null;
+    }
+  },
   // general dom node specific definitions
   ...(node instanceof Text
     ? {}
@@ -64,16 +75,17 @@ export const getDomNodeProxyDefinition = ({
           }
 
           const newNode = document.createElement(type);
-          const id = queries.nextId();
+          const id = nodeManager.nextId();
 
-          const element = queries.add({
+          const element = nodeManager.add({
             id,
             node: newNode,
             handle: createObjectFromDefinition({
               context: context,
+              hObject: context.newObject(nodeManager.nodePrototype),
               definition: getDomNodeProxyDefinition({
                 context: context,
-                queries: queries,
+                nodeManager: nodeManager,
                 filters,
                 node: newNode,
                 id: id
@@ -84,16 +96,17 @@ export const getDomNodeProxyDefinition = ({
         },
         createTextNode: (hText) => {
           const textNode = document.createTextNode(context.getString(hText));
-          const id = queries.nextId();
+          const id = nodeManager.nextId();
 
-          const element = queries.add({
+          const element = nodeManager.add({
             id,
             node: textNode,
             handle: createObjectFromDefinition({
               context: context,
+              hObject: context.newObject(nodeManager.nodePrototype),
               definition: getDomNodeProxyDefinition({
                 context: context,
-                queries: queries,
+                nodeManager: nodeManager,
                 filters,
                 node: textNode,
                 id: id
@@ -118,16 +131,17 @@ export const getDomNodeProxyDefinition = ({
           }
 
           const textNode = document.createElementNS(namespace, name) as HTMLElement;
-          const id = queries.nextId();
+          const id = nodeManager.nextId();
 
-          const element = queries.add({
+          const element = nodeManager.add({
             id,
             node: textNode,
             handle: createObjectFromDefinition({
               context: context,
+              hObject: context.newObject(nodeManager.nodePrototype),
               definition: getDomNodeProxyDefinition({
                 context: context,
-                queries: queries,
+                nodeManager: nodeManager,
                 filters,
                 node: textNode,
                 id: id
@@ -185,7 +199,7 @@ export const getDomNodeProxyDefinition = ({
           node.removeAttribute(context.getString(hAttr));
         },
         appendChild: (hChild) => {
-          const child = queries.findByHandle(hChild);
+          const child = nodeManager.findByHandle(hChild);
 
           if (!child) {
             // console.error(context.dump(hChild));
@@ -197,39 +211,82 @@ export const getDomNodeProxyDefinition = ({
         },
         removeChild: (hChild) => {
           const hChildRet = hChild.dup(); // Need to send back the child, the handle will be disposed by deleteByHandle
-          node.removeChild(queries.deleteByHandle(hChild).node);
+          node.removeChild(nodeManager.deleteByHandle(hChild).node);
           return hChildRet;
         },
         addEventListener: (hEventName, hFunc, hOptions) => {
+          if (context.typeof(hFunc) !== 'function') {
+            return;
+          }
+
           const duped = hFunc.dup();
           const eventName = context.getString(hEventName);
 
-          const listener: EventListener = (ev) => {
+          const listener: EventListener = async (ev) => {
             try {
-              context
-                .unwrapResult(
-                  context.callFunction(duped, context.undefined, domEventToQjsEvent(context, ev, queries.findByNode))
-                )
-                .dispose();
-              context.runtime.executePendingJobs();
+              if (duped.alive) {
+                context.unwrapResult(
+                  context.callFunction(
+                    duped,
+                    context.undefined,
+                    domEventToQjsEvent(context, ev, nodeManager.findByNode)
+                  )
+                );
+              } else {
+                node.removeEventListener(eventName, listener);
+              }
             } catch (e) {
               console.error('Error during event handler', e, ev);
+            } finally {
+              queueMicrotask(() => context.runtime.executePendingJobs());
             }
           };
 
-          node.addEventListener(eventName, listener, context.dump(hOptions));
+          node.addEventListener(
+            eventName,
+            listener,
+            hOptions && hOptions !== context.undefined ? context.dump(hOptions) : undefined
+          );
 
-          eventListeners.set(duped.value, () => {
-            node.removeEventListener(eventName, listener);
-            duped.dispose();
-          });
+          context.setProp(
+            hFunc,
+            `__removeEventHandlerId_${id}_${eventName}`,
+            context.newFunction('_', () => {
+              node.removeEventListener(eventName, listener);
+              if (duped.alive) {
+                duped.dispose();
+              }
+            })
+          );
         },
         removeEventListener: (hEventName, hFunc) => {
-          eventListeners.get(hFunc.value)?.();
+          try {
+            const hDisposer = context.getProp(hFunc, `__removeEventHandlerId_${id}_${context.getString(hEventName)}`);
+            if (context.typeof(hDisposer) === 'function') {
+              context.callFunction(hDisposer, context.undefined);
+            }
+          } catch (e) {
+            console.warn('Error during removeEventListener');
+          }
+        },
+        offsetParent: {
+          get: () => nodeManager.findByNode(node.parentElement as HTMLElement)?.handle.dup() || context.null
+        },
+        offsetLeft: {
+          get: () => context.newNumber(node.offsetLeft)
+        },
+        offsetTop: {
+          get: () => context.newNumber(node.offsetTop)
+        },
+        offsetHeight: {
+          get: () => context.newNumber(node.offsetHeight)
+        },
+        offsetWidth: {
+          get: () => context.newNumber(node.offsetWidth)
         },
 
         // Extended definitions for specific tags, e.g. <select>, <input> etc
-        ...extendDefinitionForTag(context, queries, node)
+        ...extendDefinitionForTag(context, nodeManager, node)
       })
 });
 

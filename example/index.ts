@@ -64,9 +64,9 @@ const createSandbox = debounce((source: string) => {
   return createQjsReactSandbox({
     container,
     source: transpile(source),
-    extraGlobalsDefinition: {
+    extraGlobalsDefinition: () => ({
       test: 'hi'
-    }
+    })
   });
 }, 500);
 

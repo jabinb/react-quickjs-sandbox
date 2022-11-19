@@ -35,13 +35,13 @@ jobs:
       - name: Setup node
         uses: actions/setup-node@v3
         with:
-          node-version: 16.13.x
-          cache: npm
+          node-version: 18
+          cache: yarn
       - name: Enable corepack
         run: corepack enable
       - name: Install
         run: yarn install
-      - name: Install
+      - name: Build
         run: yarn build
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v1

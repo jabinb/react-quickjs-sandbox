@@ -8,6 +8,9 @@ export interface NodeManager {
   findByNode: (searchNode: HTMLElement) => TrackedElement | undefined;
   findByHandle: (handle: QuickJSHandle) => TrackedElement | undefined;
   deleteByHandle: (handle: QuickJSHandle) => TrackedElement;
+  findById: (id: number) => TrackedElement | undefined;
+  fakeDocument?: TrackedElement;
+  nodePrototype: QuickJSHandle;
   dispose: VoidFunction;
 }
 
@@ -54,12 +57,30 @@ export const getNodeManager = (context: QuickJSAsyncContext): NodeManager => {
     return el;
   };
 
+  const findById = (id: number) => {
+    return tracked.get(id);
+  };
+
+  const nodePrototype = context.unwrapResult(
+    context.evalCode(
+      `
+        (() => class {
+          static [Symbol.hasInstance](instance) {
+            return true;
+          }
+        })()
+      `
+    )
+  );
+
   return {
     nextId,
     add,
     findByNode,
     findByHandle,
     deleteByHandle,
+    findById,
+    nodePrototype,
     dispose: () => {
       [...tracked.values()].map((value) => value.handle.dispose());
     }

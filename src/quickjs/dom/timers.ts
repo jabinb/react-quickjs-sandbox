@@ -18,9 +18,8 @@ export const createTimers = (context: QuickJSAsyncContext) => {
       try {
         context.unwrapResult(context.callFunction(duped, context.undefined)).dispose();
         duped.dispose();
-        queueMicrotask(() => context.runtime.executePendingJobs());
-        // eslint-disable-next-line no-empty
       } finally {
+        queueMicrotask(() => context.runtime.executePendingJobs());
       }
     }, context.getNumber(hTimeout));
 
@@ -37,9 +36,8 @@ export const createTimers = (context: QuickJSAsyncContext) => {
     const id = setInterval(() => {
       try {
         context.unwrapResult(context.callFunction(duped.dup(), context.undefined)).dispose();
-        queueMicrotask(() => context.runtime.executePendingJobs());
-        // eslint-disable-next-line no-empty
       } finally {
+        queueMicrotask(() => context.runtime.executePendingJobs());
       }
     }, context.getNumber(hInterval));
 

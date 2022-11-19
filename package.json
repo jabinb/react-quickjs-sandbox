@@ -1,22 +1,23 @@
 {
   "name": "react-quickjs-sandbox",
-  "version": "0.0.2",
+  "version": "0.0.13", 
   "description": "Sandbox using quickjs-emscripten with support for untrusted React UI javascript",
   "author": "jabinb",
-  "license": "MIT",
+  "license": "MIT",  
   "source": "./src/index.ts",
-  "main": "./dist/esm/index.js",
-  "module": "./dist/cjs/index.js",
-  "types": "./dist/esm/index.d.ts",
+  "main": "./dist/esm/src/index.js", 
+  "module": "./dist/cjs/src/index.js",
+  "types": "./dist/esm/src/index.d.ts",
   "sideEffects": false,
   "exports": {
     ".": {
-      "import": "./dist/esm/index.js",
-      "require": "./dist/cjs/index.js"
+      "import": "./dist/esm/src/index.js",
+      "require": "./dist/cjs/src/index.js"
     }
   },
   "files": [
-    "dist"
+    "dist",
+    "src"
   ],
   "repository": {
     "type": "git",
@@ -28,7 +29,10 @@
     "build": "rm -rf dist && prettier --write src && yarn build:esm && yarn build:cjs && yarn build:example",
     "build:esm": "tsc --outDir dist/esm",
     "build:cjs": "tsc --outDir dist/cjs",
-    "test": "test"
+    "build:watch:cjs": "tsc --outDir dist/cjs --watch",
+    "build:watch:esm": "tsc --outDir dist/esm --watch",
+    "publish": "yarn build",
+    "test": "test" 
   },
   "resolutions": {
     "styled-components": "^5"

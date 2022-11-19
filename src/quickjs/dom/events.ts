@@ -16,16 +16,18 @@ export const domEventToQjsEvent = (
       case 'string':
       case 'number':
       case 'boolean':
-        context.setProp(hEvent, prop, cloneAsHandle(context, value));
+        cloneAsHandle(context, value).consume((h) => context.setProp(hEvent, prop, h));
         break;
       case 'object':
         if (value === null) {
-          context.setProp(hEvent, prop, context.null);
+          context.defineProp(hEvent, prop, { value: context.null });
         } else if (value instanceof HTMLElement) {
           const found = findByNode(value);
-          context.setProp(hEvent, prop, found ? found.handle.dup() : context.undefined);
+          context.defineProp(hEvent, prop, {
+            value: found && found.handle.alive ? found.handle.dup() : context.undefined
+          });
         } else {
-          context.setProp(hEvent, prop, context.undefined);
+          context.defineProp(hEvent, prop, { value: context.undefined });
         }
         break;
       case 'function':
@@ -33,7 +35,7 @@ export const domEventToQjsEvent = (
           case 'stopPropagation':
           case 'preventDefault':
           case 'getModifierState':
-            context.setProp(hEvent, prop, cloneAsHandle(context, value));
+            context.defineProp(hEvent, prop, { value: context.newFunction('_', () => event[prop]()) });
             break;
         }
         break;
