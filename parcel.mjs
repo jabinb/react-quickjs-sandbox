@@ -7,6 +7,7 @@ const bundler = new Parcel({
   mode: process.env.NODE_ENV,
   targets: {
     main: {
+      publicUrl: '.',
       distDir: 'build',
       context: 'browser',
       includeNodeModules: true,

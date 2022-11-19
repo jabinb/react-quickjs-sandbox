@@ -1,11 +1,11 @@
 {
   "name": "react-quickjs-sandbox",
-  "version": "0.0.13", 
+  "version": "0.0.14",
   "description": "Sandbox using quickjs-emscripten with support for untrusted React UI javascript",
   "author": "jabinb",
-  "license": "MIT",  
+  "license": "MIT",
   "source": "./src/index.ts",
-  "main": "./dist/esm/src/index.js", 
+  "main": "./dist/esm/src/index.js",
   "module": "./dist/cjs/src/index.js",
   "types": "./dist/esm/src/index.d.ts",
   "sideEffects": false,
@@ -32,7 +32,7 @@
     "build:watch:cjs": "tsc --outDir dist/cjs --watch",
     "build:watch:esm": "tsc --outDir dist/esm --watch",
     "publish": "yarn build",
-    "test": "test" 
+    "test": "test"
   },
   "resolutions": {
     "styled-components": "^5"
@@ -54,7 +54,7 @@
     "@types/styled-components": "^5.1.25",
     "@typescript-eslint/eslint-plugin": "^5.2.0",
     "@typescript-eslint/parser": "^5.2.0",
-    "buffer": "^6.0.3",
+    "buffer": "^5.5.0",
     "crypto-browserify": "^3.12.0",
     "debug": "^4.3.4",
     "eslint": "^8.19.0",
